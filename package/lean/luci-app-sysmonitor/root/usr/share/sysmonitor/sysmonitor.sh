@@ -109,6 +109,8 @@ echolog "Sysmonitor is up."
 syspid=$(cat /tmp/sysmonitor.pid)
 let syspid=syspid+1
 echo $syspid > /tmp/sysmonitor.pid
+[ -f /tmp/delay.list ] && sed -i '/sysapp.sh re_sysmonitor/d' /tmp/delay.list
+echo '55-/usr/share/sysmonitor/sysapp.sh re_sysmonitor' >> /tmp/delay.sign
 sysnetwork=1
 while [ "1" == "1" ]; do #死循环
 	ifname='br-wan'
