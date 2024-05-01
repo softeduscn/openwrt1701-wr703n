@@ -562,6 +562,7 @@ sysbutton)
 re_sysmonitor)
 	re_sysmonitor
 	[ "$(iw dev|grep channel|wc -l)" == 0 ] && wifi reload
+	[ -f /tmp/delay.tmp ] && sed -i '/re_sysmonitor/d' /tmp/delay.tmp
 	[ -f /tmp/delay.list ] && sed -i '/re_sysmonitor/d' /tmp/delay.list
 	echo '55-/usr/share/sysmonitor/sysapp.sh re_sysmonitor' >> /tmp/delay.sign
 	;;
