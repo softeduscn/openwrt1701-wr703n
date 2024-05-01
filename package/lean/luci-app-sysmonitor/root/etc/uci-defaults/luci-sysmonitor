@@ -1,0 +1,14 @@
+#!/bin/sh
+uci -q batch <<-EOF >/dev/null
+delete ucitrack.@sysmonitor[-1]
+add ucitrack sysmonitor
+set ucitrack.@sysmonitor[-1].init=sysmonitor
+commit ucitrack
+EOF
+
+chmod 0755 /etc/init.d/sysmonitor /usr/share/sysmonitor/*.sh
+sed -i '/exit 0/i\/usr\/share\/sysmonitor\/sysapp.sh firstrun' /etc/rc.local
+
+rm -rf /tmp/luci-modulecache /tmp/luci-indexcache
+
+exit 0

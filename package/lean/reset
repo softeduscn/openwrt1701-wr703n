@@ -1,0 +1,63 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+OVERLAY="$( grep ' /overlay ' /proc/mounts )"
+case "$ACTION" in
+        pressed)
+        if [ "$SEEN" -ge 5 ];then
+            echo -n 1 > /tmp/button.count
+        fi
+        [ -z "$OVERLAY" ] && return 0
+        return 5
+        ;;
+timeout)
+        . /etc/diag.sh
+        set_state failsafe
+        ;;
+released)
+        pressnumber=`cat /tmp/button.count`
+        if [ "$SEEN" -lt 1 ]
+        then
+            pressnumber=`expr $pressnumber + 1`
+            echo -n "$pressnumber" > /tmp/button.count
+        elif [ "$SEEN" -ge 1 -a "$SEEN" -lt 5 ]
+        then
+            if [ $pressnumber -eq 2 ]; then
+            	uci set sysmonitor.sysmonitor.led=0
+            	uci commit sysmonitor
+            	touch /tmp/ledonoff.sign
+             elif [ $pressnumber -eq 3 ]; then
+             	uci set sysmonitor.sysmonitor.led=1
+            	uci commit sysmonitor
+            	touch /tmp/ledonoff.sign
+             elif [ $pressnumber -eq 4 ]; then
+             	uci set sysmonitor.sysmonitor.led='-'
+            	uci commit sysmonitor
+            	touch /tmp/ledonoff.sign
+             elif [ $pressnumber -eq 5 ]; then
+            	echo "$(date '+%Y-%m-%d %H:%M:%S') wifi restart." >> /var/log/sysmonitor.log
+		echo "3 50 50" > /tmp/led.flash
+		wifi enable
+		wifi up
+            elif [ $pressnumber -eq 6 ]; then
+                echo "$(date '+%Y-%m-%d %H:%M:%S') nas reload." >> /var/log/sysmonitor.log
+		echo "3 50 50" > /tmp/led.flash
+		/usr/share/sysmonitor/sysapp.sh samba
+	     elif [ $pressnumber -eq 7 ]; then
+	     	echo "$(date '+%Y-%m-%d %H:%M:%S') nas start." >> /var/log/sysmonitor.log
+	     	echo "3 50 50" > /tmp/led.flash
+		/etc/init.d/samba start
+		/etc/init.d/nfsd start
+		/etc/init.d/vsftpd start
+            else
+                echo "$(date '+%Y-%m-%d %H:%M:%S') pressed $pressnumber and delay $SEEN seconds" >> /var/log/sysmonitor.log
+            fi
+        elif [ "$SEEN" -ge 5 -a -n "$OVERLAY" ]
+        then
+            echo "FACTORY RESET" >> /var/log/sysmonitor.log
+            jffs2reset -y && reboot &
+        fi
+        ;;
+esac
+return 0

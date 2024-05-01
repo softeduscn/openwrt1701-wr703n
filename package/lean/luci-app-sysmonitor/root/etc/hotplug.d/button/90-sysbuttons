@@ -1,0 +1,40 @@
+#vim buttons
+
+#!/bin/sh
+
+#echo BUTTON=$BUTTON >> /var/log/sysmonitor.log
+#echo ACTION=$ACTION >> /var/log/sysmonitor.log
+#exit 0
+
+sw1=$(cat /sys/kernel/debug/gpio|grep sw1|sed 's/in//g'|sed 's/[[:space:]]//g'|cut -d')' -f2)
+sw2=$(cat /sys/kernel/debug/gpio|grep sw2|sed 's/in//g'|sed 's/[[:space:]]//g'|cut -d')' -f2)
+case $sw1 in
+	hi)
+		case $sw2 in
+			hi)
+				uci set sysmonitor.sysmonitor.led=1
+				uci commit sysmonitor
+				touch /tmp/ledonoff.sign
+				;;
+			lo)
+				uci set sysmonitor.sysmonitor.led=0
+				uci commit sysmonitor
+				touch /tmp/ledonoff.sign
+				;;
+		esac
+		;;
+	lo)
+		uci set sysmonitor.sysmonitor.led=1
+		uci commit sysmonitor
+		touch /tmp/ledonoff.sign
+		case $sw2 in
+			hi)
+				uci set sysmonitor.sysmonitor.led='-'
+				uci commit sysmonitor
+				echo "- 100 3000" > /tmp/led.flash
+				;;
+		esac
+		;;
+esac
+
+exit 0

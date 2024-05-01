@@ -1,0 +1,18 @@
+[ $INTERFACE = wan6 ] && {
+proto=$(uci get network.wan.proto)
+ifname='br-wan'
+case $proto in
+	static)
+		echo "3 100 100" > /tmp/led.flash
+		ipv6=$(ip -o -6 addr list $ifname |cut -d ' ' -f7|wc -l)
+		[ "$ipv6" -ge 2 ] && /usr/share/sysmonitor/sysapp.sh wanswitch dhcp
+		;;
+	dhcp)
+		echo "3 50 50" > /tmp/led.flash
+		ipv6=$(ip -o -6 addr list $ifname |cut -d ' ' -f7|wc -l)
+		[ "$ipv6" -lt 2 ] && /usr/share/sysmonitor/sysapp.sh wanswitch static
+		;;
+	esac
+touch /tmp/sysmonitor
+}
+

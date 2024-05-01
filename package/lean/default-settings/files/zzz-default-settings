@@ -1,0 +1,304 @@
+#!/bin/sh
+
+uci set fstab.@global[0].anon_mount='1'
+uci commit fstab
+
+#uci set upnpd.config.enabled='1'
+#uci set upnpd.config.internal_iface='lan'
+#uci set upnpd.config.external_iface='wan'
+#uci set upnpd.config.presentation_url='http://192.168.89.1'
+#uci commit upnpd
+lanip='192.168.99.1'
+uci set network.globals.ula_prefix=''
+uci set network.lan.type='bridge'
+uci set network.lan.proto='static'
+uci set network.lan.ipaddr=$lanip
+uci set network.lan.netmask='255.255.255.0'
+uci set network.lan.ip6assign='64'
+uci commit network
+
+uci set wireless.radio0.country="CN"
+uci set wireless.radio0.htmode='HT40'
+uci set wireless.radio0.channel='auto'
+uci set wireless.radio0.mu_beamformer=1
+uci set wireless.radio0.legacy_rates=1
+uci set wireless.default_radio0.ssid='MUSIC'
+uci set wireless.default_radio0.encryption='psk-mixed'
+uci set wireless.default_radio0.key='music111music'
+uci set wireless.default_radio0.network='lan'
+uci commit wireless
+
+uci set system.@system[0].hostname='MUSIC'
+uci set system.@system[0].timezone=CST-8
+uci set system.@system[0].zonename=Asia/Shanghai
+uci commit system
+
+file1='/etc/config/network'
+sed -i "/option ifname 'eth0'/d" $file1
+sed -i '/wan/,$d' /etc/config/network
+cat >> /etc/config/network <<EOF
+config interface 'wan'
+	option ifname 'eth0'
+	option proto 'static'
+	option ipaddr '192.168.1.188'
+	option netmask '255.255.255.0'
+	option gateway '192.168.1.1'
+	option dns '119.29.29.29 223.5.5.5'
+	option type 'bridge'
+
+config interface 'wan6'
+	option proto 'dhcpv6'
+	option reqaddress 'try'
+	option reqprefix 'auto'
+	option ifname 'br-wan'
+EOF
+
+uci set dhcp.lan.dhcpv6='relay'
+uci set dhcp.lan.ndp='relay'
+uci set dhcp.lan.ra='relay'
+uci set dhcp.wan.dhcpv6='relay'
+uci set dhcp.wan.ndp='relay'
+uci set dhcp.wan.ra='relay'
+uci set dhcp.wan.master='1'
+uci commit dhcp
+	
+[ -f /etc/init.d/samba ] && {
+cat > /etc/config/samba <<EOF
+config samba
+	option workgroup 'WORKGROUP'
+	option homes '1'
+	option name 'music'
+	option description 'classic music'
+
+config sambashare
+	option name 'music'
+	option path '/mnt/sda1/music'
+	option read_only 'no'
+	option guest_ok 'yes'
+	option create_mask '0777'
+	option dir_mask '0777'
+EOF
+
+cat >> /etc/config/dhcp <<EOF
+config domain
+	option name 'MUSIC'
+	option ip '$lanip'
+EOF
+
+file='/etc/samba/smb.conf.template'
+#sed -i  's|local master = no|local master = yes|' $file
+cat >> $file << EOF
+	dns proxy = yes
+	preferred master = yes
+	smb ports = 445 139
+	domain master = yes
+	browseable = yes
+	wins support = yes
+	wins proxy =  yes
+	remote announce
+	remote browse sync
+	client ipc min protocol = NT1
+	client min protocol = NT1
+	server min protocol = NT1
+	min protocol = NT1
+EOF
+}
+
+uci set firewall.@defaults[0].forward='ACCEPT'
+uci set firewall.@defaults[0].flow_offloading='1'
+uci set firewall.@zone[1].input='ACCEPT'
+uci commit firewall
+
+cat > /mnt/.login.php <<EOF
+<?php
+\$host = getenv("HTTP_HOST");
+header("location: http://\$host:8080/");
+?>
+EOF
+#cat > /mnt/.ariang.php <<EOF
+#<?php
+#\$host = getenv("HTTP_HOST");
+#header("location: http://\$host:8080/ariang/");
+#?>
+#EOF
+#cat > /mnt/.index.htm <<EOF
+#<head>
+#	<meta charset="utf-8">
+#<style>	
+#	.button1 {-webkit-transition-duration: 0.4s;transition-duration: 0.4s;padding: 1px 16px;text-align: center;background-color: white;color: black;border: 12px solid #4CAF50;border-radius:36px;}
+#	.button1:hover {background-color: #4CAF50;color: white;}
+#	.button1 {font-size: 90px;}
+#</style>
+#</head>
+#<br><h2 align="center" style="font-size:100px">PERSONAL MUSIC SYSTEM</h2>
+#<table border="0" width="60%" align="center">
+#<tr><td width="50%" align="center"><button class=button1><a href="/.ariang.php" target="_self" title="Open Ariang" >Ariang</a></button></td>
+#  <td width="50%" align="center" id="ariang" style="color:brown;font-size:150px">9</td>
+#  <td width="50%" align="center"><button class=button1><a href="/.login.php" target="_self"  title="Openwrt Login" >LOGIN</a></button></td>
+#</tr>
+#</table>
+#<script language="javascript">
+#	var num = 9;
+#	var URL = ".login.php";
+#	window.setTimeout("doUpdate()", 1000);
+#	function doUpdate(){
+#		if(num != 0){
+#			document.getElementById('ariang').innerHTML = num ;
+#			num --;
+#			window.setTimeout("doUpdate()", 1000);
+#		}else{
+#			num = 9;
+#			window.location = URL; 
+#		}
+#	}
+#</script>
+#EOF
+cat > /mnt/.index.htm <<EOF
+<head>
+	<meta charset="utf-8">
+<style>	
+	.button1 {-webkit-transition-duration: 0.4s;transition-duration: 0.4s;padding: 1px 16px;text-align: center;background-color: white;color: black;border: 12px solid #4CAF50;border-radius:36px;}
+	.button1:hover {background-color: #4CAF50;color: white;}
+	.button1 {font-size: 90px;}
+</style>
+</head>
+<p align="center" style="font-size:50px"><font color="green">PERSONAL MUSIC</font></p>
+
+<table border="0" align="center" style="font-size:30px">
+<tr><td width="100%" align="center"><font color="green">wifi password: </font><font color=brown>music111music</font></td></tr>
+</table>
+
+<table border="0" align="center">
+    <tr><td width="50%" align="center"><button class=button1><a href="/.login.php" target="_self"  title="Music Login" >LOGIN</a></button></td></tr>
+</table>
+<p width="50%" align="center" id="wait" style="color:brown;font-size:60px">9</p>
+
+<script language="javascript">
+	var num = 9;
+	var URL = ".login.php";
+	window.setTimeout("doUpdate()", 1000);
+	function doUpdate(){
+		if(num != 0){
+			document.getElementById('wait').innerHTML = num ;
+			num --;
+			window.setTimeout("doUpdate()", 1000);
+		}else{
+			num = 9;
+			window.location = URL; 
+		}
+	}
+</script>
+EOF
+
+[ -f /etc/init.d/aria2 ] && {
+cat > /etc/config/aria2 <<EOF
+config aria2 'main'
+	option dir '/mnt/sda1/aria2'
+	option bt_enable_lpd 'true'
+	option enable_dht 'true'
+	option follow_torrent 'true'
+	option file_allocation 'none'
+	option save_session_interval '30'
+	list header ''
+	list extra_settings ''
+	option enabled '1'
+	option rpc_auth_method 'token'
+	option rpc_secret 'be0ldxf2d7ad52yjq8dqmsl3cawq8hjl'
+	option enable_log 'false'
+	option config_dir '/var/etc/aria2'
+	option user 'root'
+EOF
+}
+
+[ -f /etc/init.d/miniupnpd ] && {
+cat > /etc/config/upnpd <<EOF
+config upnpd 'config'
+	option download '1024'
+	option upload '512'
+	option port '5000'
+	option upnp_lease_file '/var/upnp.leases'
+	option enabled '1'
+	option presentation_url 'http://192.168.89.1'
+	option uuid '8d36d6a9-6ba8-47bd-9538-5c12a741481b'
+
+config perm_rule
+	option action 'allow'
+	option ext_ports '1024-65535'
+	option int_addr '0.0.0.0/0'
+	option int_ports '1024-65535'
+	option comment 'Allow high ports'
+
+config perm_rule
+	option action 'deny'
+	option ext_ports '0-65535'
+	option int_addr '0.0.0.0/0'
+	option int_ports '0-65535'
+	option comment 'Default deny'
+EOF
+}
+
+[ -f /etc/lighttpd/conf.d/30-webdav.conf ] && {
+cat > /etc/lighttpd/conf.d/30-webdav.conf <<EOF
+server.modules += ( "mod_webdav" )
+
+webdav.activate = "enable"
+webdav.is-readonly = "enable"
+webdav.sqlite-db-name = "/tmp/lighttpd-webdav.db"
+EOF
+
+file='/etc/lighttpd/lighttpd.conf'
+sed -i '/server.document-root/a\sqmshcn' $file
+sed -i '/server.document-root/d' $file
+sed -i  's|sqmshcn|server.document-root        = "/mnt"|' $file
+sed -i  's|"index.lighttpd.html"|"index.lighttpd.html", ".index.htm", ".index.php"|' $file
+sed -i  's|".php", ".pl", ".fcgi"|".php", ".pl", ".fcgi", ".lua"|' $file
+sed -i s/':80'/':8080'/ /etc/config/uhttpd
+}
+
+[ -f /etc/php.ini ] && {
+file='/etc/php.ini'
+sed -i '/doc_root/a\sqmshcn' $file
+sed -i '/doc_root/d' $file
+sed -i  's|sqmshcn|doc_root = "/mnt"|' $file
+}
+
+[ -f /etc/lighttpd/conf.d/30-cgi.conf ] && {
+sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".lua" => "\/usr\/bin\/lua",' /etc/lighttpd/conf.d/30-cgi.conf
+sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".php" => "\/usr\/bin\/php-cgi",' /etc/lighttpd/conf.d/30-cgi.conf
+cat >> /etc/lighttpd/conf.d/30-cgi.conf <<EOF
+cgi.assign += ( "/cgi-bin/luci" => "",
+                "/cgi-bin/cgi-backup" => "",
+                "/cgi-bin/cgi-download" => "",
+                "/cgi-bin/cgi-exec" => "",
+                "/cgi-bin/cgi-upload" => "" )
+				
+server.username := ""
+server.groupname := ""
+EOF
+}
+
+mkdir /home
+mkdir /home/ftp
+chmod 755 /home
+chmod 755 /home/ftp
+
+/etc/init.d/vsftpd disable
+/etc/init.d/samba disable
+/etc/init.d/nfs disable
+
+sed -i -e '/option Interface/d' /etc/config/dropbear
+/etc/init.d/dropbear restart
+
+#sed -i '/^$/d;/ip6tables -P/d' /etc/firewall.user
+#echo "ip6tables -P INPUT ACCEPT" >>/etc/firewall.user
+#echo "ip6tables -P FORWARD ACCEPT" >>/etc/firewall.user
+#echo "ip6tables -P OUTPUT ACCEPT" >>/etc/firewall.user
+
+#sed -i 's/root::0:0:99999:7:::/root:$1\$a3U2pXqd$2rrLgzr2ZuG6.4LVSIS4i.:19147:0:99999:7:::/g' /etc/shadow
+sed -i 's/("uid") == 0/("uid") == 1/g' /usr/lib/lua/luci/view/themes/bootstrap/header.htm
+
+sed -i '/option disabled/d' /etc/config/wireless
+sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
+
+wifi up
+exit 0

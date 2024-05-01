@@ -1,0 +1,19 @@
+{
+	"luci-app-vsftpd": {
+		"description": "Grant access to LuCI app vsftpd",
+		"read": {
+			"file": {
+				"/etc/config/vsftpd": [ "read" ],
+				"/etc/init.d/vsftpd": [ "exec" ]
+			},
+			"uci": [ "vsftpd", "vsftpd" ]
+		},
+		"write": {
+			"file": {
+				"/etc/config/vsftpd": [ "write" ]
+			},
+			"uci": [ "vsftpd", "vsftpd" ]
+
+		}
+	}
+}
