@@ -547,7 +547,6 @@ firstrun(){
 	ifup lan
 	wifi reload
 	samba
-	echo '60-/usr/share/sysmonitor/sysapp.sh re_sysmonitor' >> /tmp/delay.sign
 }
 
 [ "$(cat /tmp/sysmonitor.pid)" == 0 ] && re_sysmonitor
@@ -563,7 +562,7 @@ sysbutton)
 re_sysmonitor)
 	re_sysmonitor
 	[ "$(iw dev|grep channel|wc -l)" == 0 ] && wifi reload
-	[ -f /tmp/delay.list ] && sed -i '/sysapp.sh re_sysmonitor/d' /tmp/delay.list
+	[ -f /tmp/delay.list ] && sed -i '/re_sysmonitor/d' /tmp/delay.list
 	echo '55-/usr/share/sysmonitor/sysapp.sh re_sysmonitor' >> /tmp/delay.sign
 	;;
 setdns)
