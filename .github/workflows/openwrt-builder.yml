@@ -156,12 +156,12 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: Upload firmware directory
-      uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      with:
-        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE }}
+#    - name: Upload firmware directory
+#      uses: actions/upload-artifact@main
+#      if: steps.organize.outputs.status == 'success' && !cancelled()
+#      with:
+#        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+#        path: ${{ env.FIRMWARE }}
 
     - name: Generate release tag
       id: tag
@@ -170,15 +170,6 @@ jobs:
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
         echo "status=success" >> $GITHUB_OUTPUT
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 3
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Upload latest to release
       uses: softprops/action-gh-release@master
@@ -200,9 +191,13 @@ jobs:
         body_path: release.txt
         files: ${{ env.FIRMWARE_wr703n }}/*
 
-    - name: Delete workflow runs
-      uses: GitRML/delete-workflow-runs@main
+    - name: Delete releases and workflows runs
+      uses: ophub/delete-releases-workflows@main
       with:
-        retain_days: 1
-        keep_minimum_runs: 3
-
+        delete_releases: true
+        releases_keep_latest: 3
+        releases_keep_keyword: $TAG_NAME
+        delete_workflows: true
+        workflows_keep_day: 3
+        out_log: ${{ inputs.out_log }}
+        gh_token: ${{ secrets.GITHUB_TOKEN }}

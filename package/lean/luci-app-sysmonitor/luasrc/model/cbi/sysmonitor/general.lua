@@ -4,7 +4,7 @@ local global = 'sysmonitor'
 local uci = luci.model.uci.cursor()
 local ip = luci.sys.exec("/usr/share/sysmonitor/sysapp.sh getip")
 
-m = Map("sysmonitor",translate("System Settings"))
+m = Map("sysmonitor",translate("System Status & Settings"))
 m:append(Template("sysmonitor/status"))
 
 s = m:section(TypedSection, "sysmonitor",translate(""))
@@ -13,7 +13,7 @@ s.anonymous = true
 --o=s:option(Flag,"enable", translate("Enable"))
 --o.rmempty=false
 
-o = s:option(ListValue, "led", translate("led On/Off/Flash"))
+o = s:option(ListValue, "led", translate("Led On/Off/Flash"))
 o:value("0", translate("Off"))
 o:value("1", translate("On"))
 o:value("-", translate("Flash"))

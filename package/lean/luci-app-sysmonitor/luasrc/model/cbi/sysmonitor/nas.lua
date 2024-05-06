@@ -7,7 +7,7 @@ else
 end
 luci.sys.exec("uci commit sysmonitor")
 
-m = Map("sysmonitor",translate("NAS Settings"))
+m = Map("sysmonitor",translate("NAS Status & Settings"))
 
 m:append(Template("sysmonitor/nas"))
 
