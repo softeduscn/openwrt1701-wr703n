@@ -6,6 +6,9 @@ set ucitrack.@sysmonitor[-1].init=sysmonitor
 commit ucitrack
 EOF
 
+sed -i 's_downloads.lede-project.org_mirrors.cloud.tencent.com/openwrt_' /etc/opkg/distfeeds.conf
+sed -i "s/-SNAPSHOT/.7/g" /etc/opkg/distfeeds.conf
+	
 chmod 0755 /etc/init.d/sysmonitor /usr/share/sysmonitor/*.sh
 sed -i '/exit 0/i\/usr\/share\/sysmonitor\/sysapp.sh firstrun' /etc/rc.local
 

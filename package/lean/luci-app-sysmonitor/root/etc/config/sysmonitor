@@ -2,6 +2,7 @@
 config sysmonitor 'sysmonitor'
 	option enable '1'
 	option led '1'
+	option systime '10'
 	option initial_dir 'music,video'
 	option webdav_rw '0'
 	option ftp '1'

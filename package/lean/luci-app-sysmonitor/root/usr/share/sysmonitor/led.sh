@@ -1,6 +1,9 @@
 #!/bin/sh
 
 [ -f /tmp/led.run ] && exit
+[ ! -f /tmp/led.pid ] && echo 0 >/tmp/led.pid
+[ "$(cat /tmp/led.pid)" != 0 ] && exit
+
 touch /tmp/led.run
 NAME=sysmonitor
 APP_PATH=/usr/share/$NAME
@@ -26,9 +29,17 @@ uci_set_by_name() {
 
 sys_exit() {
 	[ -f /tmp/led.run ] && rm -rf /tmp/led.run
+	syspid=$(cat /tmp/led.pid)
+	syspid=$((syspid-1))
+	echo $syspid > /tmp/led.pid
+
 	exit 0
 }
 echolog "led control is up."
+syspid=$(cat /tmp/led.pid)
+syspid=$((syspid+1))
+echo $syspid > /tmp/led.pid
+
 sw1=$(cat /sys/kernel/debug/gpio|grep sw1|sed 's/in//g'|sed 's/[[:space:]]//g'|cut -d')' -f2)
 sw2=$(cat /sys/kernel/debug/gpio|grep sw2|sed 's/in//g'|sed 's/[[:space:]]//g'|cut -d')' -f2)
 case $sw1 in
@@ -61,30 +72,55 @@ case $sw1 in
 esac
 num=0
 while [ "1" == "1" ]; do
-	if [ -f /tmp/delay.sign ]; then 
-		cat /tmp/delay.sign >> /tmp/delay.list
+	prog='sysmonitor'
+	for i in $prog
+	do
+		progsh=$i'.sh'
+		progpid='/tmp/'$i'.pid'
+		[ "$(pgrep -f $progsh|wc -l)" == 0 ] && echo 0 > $progpid
+		[ ! -f $progpid ] && echo 0 > $progpid
+		arg=$(cat $progpid)
+		case $arg in
+			0)
+				[ "$(pgrep -f $progsh|wc -l)" != 0 ] && killall $progsh
+				progrun='/tmp/'$i'.run'
+				[ -f $progrun ] && rm $progrun
+				[ -f $progpid ] && rm $progpid
+				$APP_PATH/$progsh &
+				;;
+			1)
+				;;
+			*)
+				killall $progsh
+				echo 0 > $progpid
+				;;
+		esac	
+	done
+	if [ -f /tmp/delay.sign ]; then
+		while read i
+		do
+			prog=$(echo $i|cut -d'=' -f2)
+			[ -n $(echo $prog|cut -d' ' -f2) ] && prog=$(echo $prog|cut -d' ' -f2)
+			sed -i "/$prog/d" /tmp/delay.list
+			echo $i >> /tmp/delay.list
+		done < /tmp/delay.sign
 		rm /tmp/delay.sign
 	fi
 	if [ -f /tmp/delay.list ]; then
 		touch /tmp/delay.tmp
 		while read line
 		do
-   			num=$(echo $line|cut -d'-' -f1)
-			prog=$(echo $line|cut -d'-' -f2-)
-			if [ "$num" != 0 ];  then
+   			num=$(echo $line|cut -d'=' -f1)
+			prog=$(echo $line|cut -d'=' -f2-)
+			if [ "$num" -gt 0 ];  then
 				num=$((num-1))
-				tmp=$num'-'$prog
+				tmp=$num'='$prog
 				echo $tmp >> /tmp/delay.tmp
 			else
-				$prog
+			[ "$num" == 0 ] && $prog &
 			fi
 		done < /tmp/delay.list
-		if [ -n "$(cat /tmp/delay.tmp)" ]; then
-			mv /tmp/delay.tmp /tmp/delay.list
-		else
-			rm /tmp/delay.tmp
-			rm /tmp/delay.list
-		fi	
+		mv /tmp/delay.tmp /tmp/delay.list	
 	fi
 	if [ -f /tmp/ledonoff.sign ]; then
 		led=$(uci_get_by_name $NAME $NAME led 1)
@@ -127,6 +163,7 @@ while [ "1" == "1" ]; do
 	esac
 	fi
 	[ ! -f /tmp/led.run ] && sys_exit
+	[ "$(cat /tmp/led.pid)" -gt 1 ] && sys_exit
 	sleep 1
 	num=$((num+1))
 done

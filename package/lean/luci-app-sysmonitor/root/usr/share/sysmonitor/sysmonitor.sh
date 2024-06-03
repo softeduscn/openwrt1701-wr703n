@@ -1,6 +1,7 @@
 #!/bin/sh
 
 [ -f /tmp/sysmonitor.run ] && exit
+[ ! -f /tmp/sysmonitor.pid ] && echo 0 >/tmp/sysmonitor.pid
 [ "$(cat /tmp/sysmonitor.pid)" != 0 ] && exit
 
 sleep_unit=1
@@ -109,10 +110,8 @@ echolog "Sysmonitor is up."
 syspid=$(cat /tmp/sysmonitor.pid)
 let syspid=syspid+1
 echo $syspid > /tmp/sysmonitor.pid
-[ -f /tmp/delay.list ] && sed -i '/re_sysmonitor/d' /tmp/delay.list
-echo '55-/usr/share/sysmonitor/sysapp.sh re_sysmonitor' >> /tmp/delay.sign
 sysnetwork=1
-while [ "1" == "1" ]; do #死循环
+while [ "1" == "1" ]; do
 	ifname='br-wan'
 	ip=$(ip -o -4 addr list $ifname | cut -d ' ' -f7|cut -d'/' -f1)
 	if [ -n "$ip" ]; then
@@ -157,26 +156,37 @@ while [ "1" == "1" ]; do #死循环
 			;;
 	esac
 	num=0
-	while [ $num -le 10 ]; do
+	check_time=$(uci_get_by_name $NAME $NAME systime 10)
+	while [ $num -le $check_time ]; do
 		prog='led'
 		for i in $prog
 		do
-			progsh=$i'.sh'	
-			#if [ "$(ps |grep -v grep|grep $progsh|wc -l)" == 0 ]; then
-			if [ ! -n "$(pgrep -f $progsh)" ]; then
-				progrun='/tmp/'$i'.run'
-				[ -f $progrun ] && rm $progrun
-				$APP_PATH/$progsh &
-			fi
+			progsh=$i'.sh'
+			progpid='/tmp/'$i'.pid'
+			[ "$(pgrep -f $progsh|wc -l)" == 0 ] && echo 0 > $progpid
+			[ ! -f $progpid ] && echo 0 > $progpid
+			arg=$(cat $progpid)
+			case $arg in
+				0)
+					[ "$(pgrep -f $progsh|wc -l)" != 0 ] && killall $progsh
+					progrun='/tmp/'$i'.run'
+					[ -f $progrun ] && rm $progrun
+					[ -f $progpid ] && rm $progpid
+					$APP_PATH/$progsh &
+					;;
+				1)
+					;;
+				*)
+					killall $progsh
+					echo 0 > $progpid
+					;;
+			esac	
 		done
-		#[ "$(ps |grep lighttpd|grep -v grep|wc -l)" == 0 ] && {
+		[ "$(iw dev|grep channel|wc -l)" == 0 ] && wifi reload
+		[ -n "$(pgrep -f lighttpd)" ] && [ ! -n "$(pgrep -f uhttpd)" ] && /etc/init.d/uhttpd start
 		[ ! -n "$(pgrep -f lighttpd)" ] && {
 			/etc/init.d/uhttpd stop
-			#/etc/init.d/lighttpd start
-			#/etc/init.d/uhttpd start
-			echo '1-/etc/init.d/lighttpd start' >> /tmp/delay.sign
-			echo '2-/etc/init.d/uhttpd start' >> /tmp/delay.sign
-
+			/etc/init.d/lighttpd start
 			}
 		if [ -f /tmp/network.sign ]; then
 			rm /tmp/network.sign

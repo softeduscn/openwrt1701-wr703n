@@ -19,6 +19,9 @@ o:value("1", translate("On"))
 o:value("-", translate("Flash"))
 o.rmempty=true
 
+o = s:option(Value, "systime", translate("Check system time(s)"))
+o.rmempty = false
+
 o = s:option(Value, "wan", translate("WAN IP Address"))
 --o.description = translate("IP for local(192.168.1.118)")
 o.datatype = "or(host)"
