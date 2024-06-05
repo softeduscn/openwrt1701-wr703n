@@ -276,8 +276,9 @@ file='/usr/lib/lua/luci/view/themes/bootstrap/header.htm'
 sed -i '/disp.context.request/a\\t\local sid = disp.context.authsession' $file
 sed -i '/uid/i\\t\t\<%- if not sid then -%>' $file			
 sed -i '/uid/i\\t\t\t\<div class="container">' $file				
-sed -i '/uid/i\\t\t\t\t\<div class="alert-message warning">' $file				
-sed -i '/uid/i\\t\t\t\t\t\<h2><font color=red><%:Reset button useage%></font></h2>' $file			
+sed -i '/uid/i\\t\t\t\t\<div class="alert-message warning">' $file	
+sed -i '/uid/i\\t\t\t\t\t\<h2><font color=blue><%:Persional MUSIC%></font></h2>' $file				
+sed -i '/uid/i\\t\t\t\t\t\<h2><font color=brown><%:Reset button useage%></font></h2>' $file			
 sed -i '/uid/i\\t\t\t\t\t\<B><font color=brown><%:Press reset button 5S for restore factory rom%><br>' $file
 sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 2 times,and last press long 2s for led off%><br>' $file
 sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 3 times,and last press long 2s for led on%><br>' $file
