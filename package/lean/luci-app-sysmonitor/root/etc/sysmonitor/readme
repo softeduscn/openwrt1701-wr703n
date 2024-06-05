@@ -2,19 +2,19 @@ reset 键使用说明
 #长按5秒 ：恢复出厂设置	Press reset button 5S for restore factory rom
 
 #快速短按2次，最后一次长按2秒： 关闭蓝色指示灯
-fast Press reset button 2 times,and last press long 2s for led off
+Fast press reset button 2 times,and last press long 2s for led off
 
 #快速短按3次，最后一次长按2秒： 开启蓝色指示灯 
-fast Press reset button 3 times,and last press long 2s for led on
+Fast press reset button 3 times,and last press long 2s for led on
 
 #快速短按4次，最后一次长按2秒： 闪烁蓝色指示灯
-fast Press reset button 4 times,and last press long 2s for led flash
+Fast press reset button 4 times,and last press long 2s for led flash
 
 #快速短按5次，最后一次长按2秒： 重启wifi
-fast Press reset button 5 times,and last press long 2s for wifi restart
+Fast press reset button 5 times,and last press long 2s for wifi restart
 
 #快速短按6次，最后一次长按2秒： 修复nas
-fast Press reset button 6 times,and last press long 2s for nas reload
+Fast press reset button 6 times,and last press long 2s for nas reload
 
-#快速短按7次，最后一次长按2秒： 强启nas(samba,vsftp,nfs)
-fast Press reset button 7 times,and last press long 2s for nas restart (samba,vsftp,nfs)
+#快速短按7次，最后一次长按2秒： 强启nas(webdav,samba,vsftp,nfs)
+Fast Press reset button 7 times,and last press long 2s for nas restart (webdav,samba,vsftp,nfs)

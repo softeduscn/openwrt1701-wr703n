@@ -121,73 +121,47 @@ EOF
 #header("location: http://\$host:8080/ariang/");
 #?>
 #EOF
-#cat > /mnt/.index.htm <<EOF
-#<head>
-#	<meta charset="utf-8">
-#<style>	
-#	.button1 {-webkit-transition-duration: 0.4s;transition-duration: 0.4s;padding: 1px 16px;text-align: center;background-color: white;color: black;border: 12px solid #4CAF50;border-radius:36px;}
-#	.button1:hover {background-color: #4CAF50;color: white;}
-#	.button1 {font-size: 90px;}
-#</style>
-#</head>
-#<br><h2 align="center" style="font-size:100px">PERSONAL MUSIC SYSTEM</h2>
-#<table border="0" width="60%" align="center">
-#<tr><td width="50%" align="center"><button class=button1><a href="/.ariang.php" target="_self" title="Open Ariang" >Ariang</a></button></td>
-#  <td width="50%" align="center" id="ariang" style="color:brown;font-size:150px">9</td>
-#  <td width="50%" align="center"><button class=button1><a href="/.login.php" target="_self"  title="Openwrt Login" >LOGIN</a></button></td>
-#</tr>
-#</table>
-#<script language="javascript">
-#	var num = 9;
-#	var URL = ".login.php";
-#	window.setTimeout("doUpdate()", 1000);
-#	function doUpdate(){
-#		if(num != 0){
-#			document.getElementById('ariang').innerHTML = num ;
-#			num --;
-#			window.setTimeout("doUpdate()", 1000);
-#		}else{
-#			num = 9;
-#			window.location = URL; 
-#		}
-#	}
-#</script>
-#EOF
+
 cat > /mnt/.index.htm <<EOF
 <head>
-	<meta charset="utf-8">
-<style>	
-	.button1 {-webkit-transition-duration: 0.4s;transition-duration: 0.4s;padding: 1px 16px;text-align: center;background-color: white;color: black;border: 12px solid #4CAF50;border-radius:36px;}
-	.button1:hover {background-color: #4CAF50;color: white;}
-	.button1 {font-size: 90px;}
+<meta charset="utf-8">
+<style>
+.button1 {-webkit-transition-duration: 0.4s;transition-duration: 0.4s;padding: 1px 18px;text-align: center;background-color: white;color: black;border: 6px solid #4CAF50;border-radius:16px;}
+.button1:hover {background-color: #4CAF50;color: white;}
+.button1 {font-size: 60px;}
 </style>
 </head>
 <p align="center" style="font-size:50px"><font color="green">PERSONAL MUSIC</font></p>
-
-<table border="0" align="center" style="font-size:30px">
-<tr><td width="100%" align="center"><font color="green">wifi password: </font><font color=brown>music111music</font></td></tr>
+<table border="1" align="center" style="font-size:16px">
+<tr><td width="100%" align="left"><font color="green">WIFI default password: </font><font color=brown>music111music</font></td></tr>
 </table>
-
+<BR>
 <table border="0" align="center">
     <tr><td width="50%" align="center"><button class=button1><a href="/.login.php" target="_self"  title="Music Login" >LOGIN</a></button></td></tr>
 </table>
-<p width="50%" align="center" id="wait" style="color:brown;font-size:60px">9</p>
+<p width="50%" align="center" id="wait" style="color:brown;font-size:30px">15</p>
 
 <script language="javascript">
-	var num = 9;
-	var URL = ".login.php";
-	window.setTimeout("doUpdate()", 1000);
-	function doUpdate(){
-		if(num != 0){
-			document.getElementById('wait').innerHTML = num ;
-			num --;
-			window.setTimeout("doUpdate()", 1000);
-		}else{
-			num = 9;
-			window.location = URL; 
-		}
-	}
+var num = 15;
+var URL = ".login.php";
+window.setTimeout("doUpdate()", 1000);
+function doUpdate(){
+if(num != 0){
+document.getElementById('wait').innerHTML = num ;
+num --;
+window.setTimeout("doUpdate()", 1000);
+}else{
+num = 15;
+window.location = URL; 
+}
+}
 </script>
+EOF
+
+cat > /mnt/.index.htm <<EOF
+<head>
+<meta http-equiv="refresh" content="0;url=/.login.php"> 
+</head>
 EOF
 
 [ -f /etc/init.d/aria2 ] && {
@@ -294,8 +268,28 @@ sed -i -e '/option Interface/d' /etc/config/dropbear
 #echo "ip6tables -P FORWARD ACCEPT" >>/etc/firewall.user
 #echo "ip6tables -P OUTPUT ACCEPT" >>/etc/firewall.user
 
-#sed -i 's/root::0:0:99999:7:::/root:$1\$a3U2pXqd$2rrLgzr2ZuG6.4LVSIS4i.:19147:0:99999:7:::/g' /etc/shadow
-sed -i 's/("uid") == 0/("uid") == 1/g' /usr/lib/lua/luci/view/themes/bootstrap/header.htm
+#utc_secs=$(date +%s)
+#days=$(( utc_secs / 86400 ))
+#pass='$1\$a3U2pXqd$2rrLgzr2ZuG6.4LVSIS4i.'
+#sed -i "s/root.*$/root:$pass:${days}:0:99999:7:::/g" /etc/shadow
+file='/usr/lib/lua/luci/view/themes/bootstrap/header.htm'
+sed -i '/disp.context.request/a\\t\local sid = disp.context.authsession' $file
+sed -i '/uid/i\\t\t\<%- if not sid then -%>' $file			
+sed -i '/uid/i\\t\t\t\<div class="container">' $file				
+sed -i '/uid/i\\t\t\t\t\<div class="alert-message warning">' $file				
+sed -i '/uid/i\\t\t\t\t\t\<h2><font color=red><%:Reset button useage%></font></h2>' $file			
+sed -i '/uid/i\\t\t\t\t\t\<B><font color=brown><%:Press reset button 5S for restore factory rom%><br>' $file
+sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 2 times,and last press long 2s for led off%><br>' $file
+sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 3 times,and last press long 2s for led on%><br>' $file
+sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 4 times,and last press long 2s for led flash%><br>' $file
+sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 5 times,and last press long 2s for wifi restart%><br>' $file
+sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 6 times,and last press long 2s for nas reload%><br>' $file	
+sed -i '/uid/i\\t\t\t\t\t\<%:Fast press reset button 7 times,and last press long 2s for nas restart (webdav,samba,vsftp,nfs)%></font><br>' $file
+sed -i '/uid/i\\t\t\t\t\t\<font color=blue><%:WIFI default password: music111music%></font></B><br>' $file
+sed -i '/uid/i\\t\t\t\t\</div>' $file
+sed -i '/uid/i\\t\t\t\</div>' $file
+sed -i '/uid/i\\t\t\<%- end -%>' $file
+sed -i 's/("uid") == 0/("uid") == 1/g' $file
 
 sed -i '/option disabled/d' /etc/config/wireless
 sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
